@@ -3,7 +3,7 @@ uvicorn
 openai
 pydantic
 python-dotenv
-tensorflow
+tensorflow-cpu
 scikit-learn
 pandas
 numpy
