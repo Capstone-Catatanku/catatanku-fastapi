@@ -12,7 +12,6 @@ client = AsyncOpenAI(
 chat_sessions = {}
 MODEL_NAME = "deepseek/deepseek-v4-flash:free"
 
-# === TAMBAHKAN SYSTEM PROMPT DI SINI ===
 SYSTEM_PROMPT = """
 Kamu adalah seorang Penasihat Keuangan Profesional.
 Aturan ketat yang HARUS kamu patuhi:

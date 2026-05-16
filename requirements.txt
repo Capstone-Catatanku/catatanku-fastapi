@@ -3,3 +3,8 @@ uvicorn
 openai
 pydantic
 python-dotenv
+tensorflow
+scikit-learn
+pandas
+numpy
+joblib
