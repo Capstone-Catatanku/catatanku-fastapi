@@ -2,9 +2,12 @@ from fastapi import APIRouter, HTTPException
 from models.schemas import ChatRequest, ChatResponse
 from services.llm_service import get_chat_response, clear_session
 
-router = APIRouter(prefix="/api/chat", tags=["Chat"])
+router = APIRouter(
+    prefix="/api/chat", 
+    tags=["Chat"]
+)
 
-@router.post("/chatbot", response_model=ChatResponse)
+@router.post("/ask", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     try:
         reply = await get_chat_response(request.session_id, request.message)
