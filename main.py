@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from routes.chat import router as chat_router
+from routes.chat import router as chat_router 
+from routes.nlp import router as nlp_router
 
 # Inisialisasi Aplikasi FastAPI
 app = FastAPI(
@@ -9,7 +10,8 @@ app = FastAPI(
 )
 
 # Daftarkan router dari folder routes/
-app.include_router(chat_router)
+app.include_router(chat_router) 
+app.include_router(nlp_router, prefix="/nlp", tags=["NLP"])
 
 @app.get("/")
 async def root():
