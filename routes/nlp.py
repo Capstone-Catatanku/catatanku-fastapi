@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from models import KategoriRequest, KategoriResponse
+from models.schemas import KategoriRequest, KategoriResponse
 from services.nlp_service import predict_kategori_lokal
 
 router = APIRouter()
