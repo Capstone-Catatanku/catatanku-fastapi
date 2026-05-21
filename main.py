@@ -11,7 +11,7 @@ app = FastAPI(
 
 app.include_router(chat_router)
 app.include_router(predict_router)
-app.include_router(nlp_router, prefix="/nlp", tags=["NLP"])
+app.include_router(nlp_router, prefix="/api", tags=["NLP"])
 
 @app.get("/")
 async def root():

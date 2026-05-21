@@ -16,3 +16,15 @@ class TabunganRequest(BaseModel):
 class TabunganResponse(BaseModel):
     estimasi_kali_nabung: int
     prediksi_raw: float
+
+class KategoriRequest(BaseModel):
+    deskripsi_transaksi: str
+
+class HasilSatu(BaseModel):
+    transaksi: str
+    kategori: str
+    confidence: float
+    semua_skor: dict
+
+class KategoriResponse(BaseModel):
+    hasil: list[HasilSatu]

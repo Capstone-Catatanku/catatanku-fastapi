@@ -1,16 +1,13 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from services.nlp_service import predict_kategori
+from models import KategoriRequest, KategoriResponse
+from services.nlp_service import predict_kategori_lokal
 
 router = APIRouter()
 
-class KategoriRequest(BaseModel):
-    deskripsi_transaksi: str
-
-@router.post("/predict/kategori")
+@router.post("/predict/kategori", response_model=KategoriResponse)
 async def kategori(request: KategoriRequest):
     try:
-        result = await predict_kategori(request.deskripsi_transaksi)
-        return result
+        data_prediksi = await predict_kategori_lokal(request.deskripsi_transaksi)
+        return KategoriResponse(hasil=data_prediksi)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
