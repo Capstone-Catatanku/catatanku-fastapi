@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List
 
 class ChatRequest(BaseModel):
     session_id: str
@@ -8,10 +9,14 @@ class ChatResponse(BaseModel):
     session_id: str
     reply: str
     
+class RiwayatTransaksi(BaseModel):
+    target_nominal: float
+    nominal_nabung: float
+    total_terkumpul: float
+    jarak_hari_nabung: int
+
 class TabunganRequest(BaseModel):
-    terkumpul: float
-    target: float
-    nabung: float
+    riwayat: List[RiwayatTransaksi]
 
 class TabunganResponse(BaseModel):
     estimasi_kali_nabung: int

@@ -6,28 +6,47 @@ import math
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_PATH = os.path.join(BASE_DIR, "ml_models", "model_tabungan_production.keras")
-SCALER_PATH = os.path.join(BASE_DIR, "ml_models", "scaler_x_tabungan.pkl")
+MODEL_PATH = os.path.join(BASE_DIR, "ml_models", "model_lstm_tabungan.keras")
+SCALER_X_PATH = os.path.join(BASE_DIR, "ml_models", "scaler_lstm.pkl")
+SCALER_Y_PATH = os.path.join(BASE_DIR, "ml_models", "scaler_y_lstm.pkl")
 
 model = tf.keras.models.load_model(MODEL_PATH)
-scaler = joblib.load(SCALER_PATH)
+scaler_x = joblib.load(SCALER_X_PATH)
+scaler_y = joblib.load(SCALER_Y_PATH)
 
-def predict_estimasi_tabungan(terkumpul: float, target: float, nabung: float) -> dict:
-    input_data = pd.DataFrame({
-        'total_terkumpul': [np.log1p(terkumpul)],
-        'target_nominal': [np.log1p(target)],
-        'nominal_nabung': [np.log1p(nabung)]
-    })
+SEQ_LENGTH = 5
 
-    input_scaled = scaler.transform(input_data)
+def predict_estimasi_tabungan(riwayat: list) -> dict:
+    data_histori = pd.DataFrame([r.model_dump() for r in riwayat])
+    
+    data_histori['sisa_nominal'] = data_histori['target_nominal'] - data_histori['total_terkumpul']
+    data_histori['rumus_kalkulator'] = np.ceil(data_histori['sisa_nominal'] / (data_histori['nominal_nabung'] + 1))
+    
+    fitur_x = [
+        'target_nominal', 'nominal_nabung', 'total_terkumpul', 
+        'jarak_hari_nabung', 'sisa_nominal', 'rumus_kalkulator'
+    ]
+    data_histori = data_histori[fitur_x]
 
-    res_scaled = model.predict(input_scaled, verbose=0)
+    riwayat_scaled = scaler_x.transform(data_histori)
 
-    prediksi_raw = np.expm1(res_scaled).flatten()[0]
+    jumlah_data = len(riwayat_scaled)
+    if jumlah_data < SEQ_LENGTH:
+        jumlah_padding = SEQ_LENGTH - jumlah_data
+        padding = np.zeros((jumlah_padding, len(fitur_x)))
+        riwayat_final = np.vstack([padding, riwayat_scaled])
+    else:
+        riwayat_final = riwayat_scaled[-SEQ_LENGTH:]
 
-    estimasi_kali_nabung = math.ceil(prediksi_raw)
+    input_tensor = np.expand_dims(riwayat_final, axis=0)
+
+    prediksi_scaled = model.predict(input_tensor, verbose=0)
+    
+    prediksi_raw = scaler_y.inverse_transform(prediksi_scaled)
+    
+    estimasi_kali_nabung = math.ceil(prediksi_raw[0][0])
 
     return {
-        "prediksi_raw": float(prediksi_raw),
+        "prediksi_raw": float(prediksi_raw[0][0]),
         "estimasi_kali_nabung": int(estimasi_kali_nabung)
     }

@@ -10,7 +10,7 @@ router = APIRouter(
 @router.post("/tabungan", response_model=TabunganResponse)
 async def hitung_tabungan(data: TabunganRequest):
     try:
-        hasil = predict_estimasi_tabungan(data.terkumpul, data.target, data.nabung)
+        hasil = predict_estimasi_tabungan(data.riwayat)
         return TabunganResponse(**hasil)
         
     except Exception as e:
