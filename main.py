@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from routes.chat import router as chat_router
-from routes.predict import router as predict_router
+# from routes.chat import router as chat_router
+# from routes.predict import router as predict_router
 from routes.nlp import router as nlp_router
 
 app = FastAPI(
@@ -9,8 +9,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
-app.include_router(chat_router)
-app.include_router(predict_router)
+# app.include_router(chat_router)
+# app.include_router(predict_router)
 app.include_router(nlp_router, prefix="/api", tags=["NLP"])
 
 @app.get("/")

@@ -3,7 +3,38 @@ import json
 import pickle
 import re
 import tensorflow as tf
+from tensorflow.keras.layers import Layer
 from tensorflow.keras.layers import TextVectorization
+from services.llm_service_nlp import llm_clean
+
+@tf.keras.utils.register_keras_serializable()
+class AttentionLayer(Layer):
+    def __init__(self, **kwargs):
+        super(AttentionLayer, self).__init__(**kwargs)
+        self.supports_masking = True
+
+    def build(self, input_shape):
+        self.W = self.add_weight(
+            name="att_weight",
+            shape=(input_shape[-1], 1),
+            initializer="normal"
+        )
+        super(AttentionLayer, self).build(input_shape)
+
+    def call(self, x, mask=None):
+        e = tf.matmul(x, self.W)
+
+        if mask is not None:
+            mask = tf.cast(mask, tf.float32)
+            mask = tf.expand_dims(mask, -1)
+            e = e + (mask - 1) * 1e9
+
+        a = tf.nn.softmax(e, axis=1)
+        output = x * a
+        return tf.reduce_sum(output, axis=1)
+
+    def compute_mask(self, inputs, mask=None):
+        return None
 
 SLANG_DICT = {
     "bli": "beli", "dapet": "dapat", "tdk": "tidak",
@@ -40,12 +71,15 @@ vocab_path = os.path.join(ML_MODELS_DIR, 'vocabulary.json')
 with open(vocab_path, 'r', encoding='utf-8') as f:
     vocab = json.load(f)
 
-vectorize_layer = TextVectorization(max_tokens=5000, output_sequence_length=20)
+vectorize_layer = TextVectorization(max_tokens=5000, output_sequence_length=30)
 vectorize_layer.adapt(['dummy'])
 vectorize_layer.set_vocabulary(vocab)
 
 model_path = os.path.join(ML_MODELS_DIR, 'model_klasifikasi.keras')
-model = tf.keras.models.load_model(model_path)
+model = tf.keras.models.load_model(
+    model_path,
+    custom_objects={"AttentionLayer": AttentionLayer}
+    )
 
 le_path = os.path.join(ML_MODELS_DIR, 'label_encoder.pkl')
 with open(le_path, 'rb') as f:
@@ -56,7 +90,8 @@ async def predict_kategori_lokal(deskripsi_transaksi: str) -> list:
     hasil = []
     
     for t in transaksi_list:
-        teks_bersih = clean(t)
+        teks_llm = llm_clean(t)
+        teks_bersih = clean(teks_llm)
         
         pred = model.predict(tf.constant([teks_bersih]), verbose=0)
         proba = pred[0]
