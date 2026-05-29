@@ -27,6 +27,7 @@ class KategoriRequest(BaseModel):
 
 class HasilSatu(BaseModel):
     transaksi: str
+    llm_cleansed: str
     kategori: str
     confidence: float
     semua_skor: dict

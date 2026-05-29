@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from models.schemas import ChatRequest, ChatResponse
-from services.llm_service import get_chat_response, clear_session
+from services.chatbot_service import get_chat_response, clear_session
 
 router = APIRouter(
     prefix="/api/chat", 
-    tags=["Chat"]
+    tags=["Chatbot"]
 )
 
 @router.post("/ask", response_model=ChatResponse)

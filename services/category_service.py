@@ -2,10 +2,59 @@ import os
 import json
 import pickle
 import re
+from google import genai
+from google.genai import types
 import tensorflow as tf
 from tensorflow.keras.layers import Layer
 from tensorflow.keras.layers import TextVectorization
-from services.llm_service_nlp import llm_clean
+from dotenv import load_dotenv
+
+load_dotenv()
+
+RAW_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_API_KEY = RAW_API_KEY.strip().replace('"', '').replace("'", "") if RAW_API_KEY else None
+
+client_sync = genai.Client(api_key=GEMINI_API_KEY)
+
+
+def llm_clean(teks: str) -> str:
+    if not GEMINI_API_KEY:
+        print("[LLM] Error: GEMINI_API_KEY tidak ditemukan, pakai teks asli")
+        return teks
+
+    system_instruction_cleaner = """Kamu adalah normalisasi teks untuk aplikasi pencatatan keuangan Indonesia.
+Tugasmu: ubah deskripsi transaksi menjadi frasa Bahasa Indonesia yang sederhana dan umum.
+Aturan:
+- Hapus nama orang dan nama tempat spesifik
+- Ganti nama brand/aplikasi asing dengan kategori umumnya dalam Bahasa Indonesia
+- Pertahankan makna aslinya, jangan ubah konteks transaksi
+- Hasil harus 2-5 kata saja, Bahasa Indonesia
+- Jangan tambahkan penjelasan, langsung tulis hasilnya saja
+- Jangan menambahkan kata "tagihan" untuk sewa/kosan/kontrakan
+
+Contoh:
+- "makan ayam bakar di warung pak balil" → "makan ayam bakar"
+- "beli netflix bulanan" → "langganan hiburan streaming"
+- "top up gopay" → "isi saldo dompet digital"
+- "bensin di SPBU Pertamina Batam" → "beli bahan bakar"
+- "nyicil kosan cibaduyut" -> "cicilan kosan"
+- "beli obat di klinik" → "beli obat kesehatan"
+- "bayar kost bu Endah" → "bayar tempat tinggal" """
+
+    try:
+        response = client_sync.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=teks,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction_cleaner,
+                temperature=0.1,
+                max_output_tokens=50,
+            ),
+        )
+        return response.text.strip()
+    except Exception as e:
+        print(f"[LLM] Error SDK Gemini: {e}, pakai teks asli")
+        return teks
 
 @tf.keras.utils.register_keras_serializable()
 class AttentionLayer(Layer):
@@ -64,7 +113,7 @@ def split_transaksi(teks: str) -> list:
     parts = re.split(r',|\bdan\b|\blalu\b', teks)
     return [p.strip() for p in parts if p.strip()]
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) if '__file__' in locals() else os.getcwd()
 ML_MODELS_DIR = os.path.join(BASE_DIR, 'ml_models')
 
 vocab_path = os.path.join(ML_MODELS_DIR, 'vocabulary.json')
@@ -79,7 +128,7 @@ model_path = os.path.join(ML_MODELS_DIR, 'model_klasifikasi.keras')
 model = tf.keras.models.load_model(
     model_path,
     custom_objects={"AttentionLayer": AttentionLayer}
-    )
+)
 
 le_path = os.path.join(ML_MODELS_DIR, 'label_encoder.pkl')
 with open(le_path, 'rb') as f:
@@ -99,6 +148,7 @@ async def predict_kategori_lokal(deskripsi_transaksi: str) -> list:
         
         hasil.append({
             "transaksi": t,
+            "llm_cleansed": teks_llm,
             "kategori": str(le.classes_[idx]),
             "confidence": round(float(proba[idx]) * 100, 2),
             "semua_skor": {

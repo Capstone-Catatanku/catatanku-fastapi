@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from models.schemas import TabunganRequest, TabunganResponse
-from services.ml_service import predict_estimasi_tabungan
+from services.savings_service import predict_estimasi_tabungan
 
 router = APIRouter(
     prefix="/api/predict",
-    tags=["Prediction"]
+    tags=["savings"]
 )
 
 @router.post("/tabungan", response_model=TabunganResponse)

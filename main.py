@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-# from routes.chat import router as chat_router
-# from routes.predict import router as predict_router
-from routes.nlp import router as nlp_router
+from routes.chatbot import router as chatbot_router
+from routes.savings import router as savings_router
+from routes.category import router as category_router
 
 app = FastAPI(
     title="Catatanku",
@@ -9,9 +9,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# app.include_router(chat_router)
-# app.include_router(predict_router)
-app.include_router(nlp_router, prefix="/api", tags=["NLP"])
+app.include_router(chatbot_router)
+app.include_router(savings_router)
+app.include_router(category_router, prefix="/api", tags=["category"])
 
 @app.get("/")
 async def root():
