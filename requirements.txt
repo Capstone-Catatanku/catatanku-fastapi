@@ -4,7 +4,7 @@ python-dotenv
 uvicorn
 httpx
 google-genai
-tensorflow==2.16.1
+tensorflow
 numpy
 pandas
 joblib

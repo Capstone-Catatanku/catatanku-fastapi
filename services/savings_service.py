@@ -17,15 +17,32 @@ scaler_y = joblib.load(SCALER_Y_PATH)
 SEQ_LENGTH = 5
 
 def predict_estimasi_tabungan(riwayat: list) -> dict:
+    if not riwayat:
+        return {"prediksi_raw": 0.0, "estimasi_kali_nabung": 0}
+
     data_histori = pd.DataFrame([r.model_dump() for r in riwayat])
+    
+    transaksi_terakhir = data_histori.iloc[-1]
+    target = transaksi_terakhir['target_nominal']
+    terkumpul = transaksi_terakhir['total_terkumpul']
+    
+    if terkumpul >= target:
+        return {
+            "prediksi_raw": 0.0,
+            "estimasi_kali_nabung": 0
+        }
     
     data_histori['sisa_nominal'] = data_histori['target_nominal'] - data_histori['total_terkumpul']
     data_histori['rumus_kalkulator'] = np.ceil(data_histori['sisa_nominal'] / (data_histori['nominal_nabung'] + 1))
     
+    data_histori['persentase_target'] = (data_histori['total_terkumpul'] / data_histori['target_nominal']) * 100
+    
     fitur_x = [
         'target_nominal', 'nominal_nabung', 'total_terkumpul', 
-        'jarak_hari_nabung', 'sisa_nominal', 'rumus_kalkulator'
+        'jarak_hari_nabung', 'sisa_nominal', 'rumus_kalkulator',
+        'persentase_target' 
     ]
+    
     data_histori = data_histori[fitur_x]
 
     riwayat_scaled = scaler_x.transform(data_histori)
@@ -41,10 +58,12 @@ def predict_estimasi_tabungan(riwayat: list) -> dict:
     input_tensor = np.expand_dims(riwayat_final, axis=0)
 
     prediksi_scaled = model.predict(input_tensor, verbose=0)
-    
     prediksi_raw = scaler_y.inverse_transform(prediksi_scaled)
     
     estimasi_kali_nabung = math.ceil(prediksi_raw[0][0])
+
+    if estimasi_kali_nabung < 1:
+        estimasi_kali_nabung = 1
 
     return {
         "prediksi_raw": float(prediksi_raw[0][0]),
