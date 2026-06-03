@@ -1,18 +1,17 @@
 import os
-from openai import AsyncOpenAI
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = AsyncOpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY"),
-)
+RAW_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_API_KEY = RAW_API_KEY.strip().replace('"', '').replace("'", "") if RAW_API_KEY else None
+
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 chat_sessions = {}
-MODEL_NAME = "deepseek/deepseek-v4-flash:free"
 
-# === TAMBAHKAN SYSTEM PROMPT DI SINI ===
 SYSTEM_PROMPT = """
 Kamu adalah seorang Penasihat Keuangan Profesional.
 Aturan ketat yang HARUS kamu patuhi:
@@ -23,27 +22,25 @@ Aturan ketat yang HARUS kamu patuhi:
 """
 
 async def get_chat_response(session_id: str, user_message: str) -> str:
+    if not GEMINI_API_KEY:
+        return "Error: GEMINI_API_KEY belum dikonfigurasi di file .env"
+
     if session_id not in chat_sessions:
-        chat_sessions[session_id] = [
-            {"role": "system", "content": SYSTEM_PROMPT}
-        ]
+        chat_sessions[session_id] = client.aio.chats.create(
+            model="gemini-2.5-flash",
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
+                temperature=0.2
+            )
+        )
     
-    chat_sessions[session_id].append({"role": "user", "content": user_message})
-    
-    response = await client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=chat_sessions[session_id],
-        extra_headers={
-            "HTTP-Referer": "http://localhost:8000",
-            "X-Title": "FastAPI Finance Bot",
-        }
-    )
-    
-    ai_reply = response.choices[0].message.content
-    
-    chat_sessions[session_id].append({"role": "assistant", "content": ai_reply})
-    
-    return ai_reply
+    try:
+        response = await chat_sessions[session_id].send_message(user_message)
+        return response.text
+
+    except Exception as e:
+        print(f"[ChatBot] Error SDK Gemini: {e}")
+        return f"Maaf, terjadi kesalahan internal pada sistem bot: {e}"
 
 def clear_session(session_id: str) -> bool:
     if session_id in chat_sessions:

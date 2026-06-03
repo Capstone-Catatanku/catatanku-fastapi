@@ -1,5 +1,11 @@
 fastapi
-uvicorn
-openai
 pydantic
 python-dotenv
+uvicorn
+httpx
+google-genai
+tensorflow
+numpy
+pandas
+joblib
+scikit-learn

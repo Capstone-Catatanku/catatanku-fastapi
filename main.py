@@ -1,15 +1,17 @@
 from fastapi import FastAPI
-from routes.chat import router as chat_router
+from routes.chatbot import router as chatbot_router
+from routes.savings import router as savings_router
+from routes.category import router as category_router
 
-# Inisialisasi Aplikasi FastAPI
 app = FastAPI(
-    title="Modular OpenRouter Chatbot",
-    description="API Chatbot menggunakan OpenRouter (Gemini) dengan struktur modular.",
+    title="Catatanku",
+    description="API Catatanku untuk memprediksi tabungan, mengklasifikasikan kategori dan chatbot",
     version="1.0.0"
 )
 
-# Daftarkan router dari folder routes/
-app.include_router(chat_router)
+app.include_router(chatbot_router)
+app.include_router(savings_router)
+app.include_router(category_router, prefix="/api", tags=["category"])
 
 @app.get("/")
 async def root():
