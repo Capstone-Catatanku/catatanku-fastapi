@@ -124,7 +124,7 @@ vectorize_layer = TextVectorization(max_tokens=5000, output_sequence_length=30)
 vectorize_layer.adapt(['dummy'])
 vectorize_layer.set_vocabulary(vocab)
 
-model_path = os.path.join(ML_MODELS_DIR, 'model_klasifikasi.keras')
+model_path = os.path.join(ML_MODELS_DIR, 'model_fitur_klasifikasi.keras')
 model = tf.keras.models.load_model(
     model_path,
     custom_objects={"AttentionLayer": AttentionLayer}
