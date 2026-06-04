@@ -1,6 +1,6 @@
-# 📒 Catatanku API
+# 📒 Catatanku API AI
 
-Backend API untuk aplikasi pencatatan keuangan **Catatanku**, dibangun dengan **FastAPI**. API ini menyediakan tiga fitur utama berbasis Machine Learning dan AI: klasifikasi kategori transaksi, prediksi estimasi tabungan, dan chatbot penasihat keuangan.
+AI API untuk aplikasi pencatatan keuangan **Catatanku**, dibangun dengan **FastAPI**. API ini menyediakan tiga fitur utama berbasis Machine Learning dan AI: klasifikasi kategori transaksi, prediksi estimasi tabungan, dan chatbot penasihat keuangan.
 
 ---
 
